@@ -1,0 +1,6 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/WinDevBridge.Tests/WinDevBridge.Tests.csproj" />
+    <Project Path="src/WinDevBridge/WinDevBridge.csproj" />
+  </Folder>
+</Solution>

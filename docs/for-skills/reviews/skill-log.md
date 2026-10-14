@@ -72,6 +72,13 @@
 |---|------|--------------|----------|--------------|------------|------|------|
 | 1 | 2026-10-14 | リポジトリ全体のレビュー（計画の段階。コードはなく、文書だけ） | スキルと CLAUDE.md がぶつかったとき | SKILL.md の description（コードに触れない作業では使わない） | CLAUDE.md は「レビューの判断基準にスキルを使う」とするが、対象が文書だけなのでスキルを呼ばず、reference も読まなかった。観点は CLAUDE.md の「レビューの観点」のうち整合と正しさで見た | スキルなし | CLAUDE.md「コーディング規範」、SKILL.md の description |
 | 2 | 2026-10-14 | プロンプトファイル（.github/prompts/ClaudeCodeDevelopmentBestPractices.prompt.md）のレビュー | 七箇条に当てはまらない指摘が出たとき | SKILL.md の description（コードに触れない作業では使わない） | 対象が文書だけなのでスキルを呼ばず、reference も読まなかった。指摘はすべて「整合」（サンドボックスの二義、プレースホルダーの残り、成果物の範囲、到達性の確認の手順、Dropbox の配置）と「正しさ」（ビルドの許可がホストでの任意コードの実行になること、`allowedTools` の名前、改行コードだけの差分）で拾った | スキルなし | CLAUDE.md「コーディング規範」のレビューの観点 |
+| 3 | 2026-10-14 | プロンプトファイルの実行（方式の選定とブリッジの設計） | スキルを呼んだとき、reference を読んだとき | SKILL.md の表「設計の相談」「新機能の実装」 | 設計の相談の「必ず読む」の object-design.md の全体と、新機能の実装の「必ず読む」の collaboration.md「着手前」、testing.md「テストファースト」「テストケースの設計」を読んだ | — | 表の「必ず読む」 |
+| 4 | 2026-10-14 | ブリッジの実装（ConsoleText〜BridgeTools） | スキルで判断が変わったとき | testing.md「TDD の進め方」手順 2・3 | 型ごとにテストを書き、コンパイルエラーの Red を毎回確かめてから実装した（6 つの型すべて）。ConsoleText では、Red の後の初回の実行で、テスト側の静的初期化の順序の誤りが見つかった | スキル | testing.md「TDD の進め方」 |
+| 5 | 2026-10-14 | ブリッジの実装（ProcessRunner / AppRunner） | スキルで判断が変わったとき | SKILL.md 判断ルール 3（テスト容易性 vs YAGNI） | プロセスの起動に差し替え口（インターフェイス）を置かず、判断（パス・引数・文面・設定）を純粋なクラスに寄せ、I/O の側は本物のプロセス（dotnet --version、sleep / ping）でテストした | スキル | SKILL.md 判断ルール 3 |
+| 6 | 2026-10-14 | ブリッジの実装（AppRunner を足す前） | スキルで判断が変わったとき | SKILL.md「変更範囲の節度」の準備的リファクタリング、七箇条 Once And Only Once | 出力の取り込みと時間切れの扱いを CapturedProcess に切り出し、Green を確かめてから AppRunner を足した。BridgeTools のセマフォーの重複も Refactor の拍でまとめた | スキル | SKILL.md「変更範囲の節度」 |
+| 7 | 2026-10-14 | ブリッジの実装（CapturedProcess） | スキルで判断が変わったとき | object-design.md「デメテルの法則」 | CapturedProcess が Process をそのまま公開していたのをやめ、ExitCode・MainWindowTitle・Responding・CloseMainWindow だけを公開した | スキル | object-design.md「デメテルの法則」 |
+| 8 | 2026-10-14 | ブリッジの実装 | 七箇条に当てはまらない指摘が出たとき | — | 「ブリッジの標準入出力は MCP の通信路なので、子プロセスに引き継がせない」「ログは標準エラー出力へ、EventLog には書かない」は、実行環境（MCP stdio と Windows の既定のロガー）の知識で拾った。正しさ | スキルなし | CLAUDE.md「レビューの観点」の正しさ |
+| 9 | 2026-10-14 | サンプルのビルド（Linux 側） | 実行環境（Windows 側）で不具合が見つかったとき | — | Linux の dotnet では、EnableWindowsTargeting を付けても WPF のプロジェクトが理由を出さずに失敗した。スキルの範囲の外（実行環境の差）。Windows 側の確認はブリッジの登録の後に回した | スキルなし | Plans の節 0 |
 
 ## ユーザーの指摘と感想
 

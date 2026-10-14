@@ -4,9 +4,30 @@
 
 ## プロジェクトの状況
 
-このリポジトリは計画の段階にある。アプリのソース、ビルドの仕組み、テストはまだ無いので、実行できるビルド・lint・テストのコマンドも無い。ツールを足したら、具体的なコマンドをこのファイルに書き足す。
+プロジェクトの目的と要件は `.github/prompts/ClaudeCodeDevelopmentBestPractices.prompt.md` に定めてある。設計や実装を始める前に読む。成果物 1〜4 は `Plans/20261014-1746-WindowsDesktopAutonomousDevelopment.md` にある。
 
-プロジェクトの目的と要件は `.github/prompts/ClaudeCodeDevelopmentBestPractices.prompt.md` に定めてある。設計や実装を始める前に読む。
+| 場所 | 中身 |
+|------|------|
+| `src/WinDevBridge` | ブリッジ。Windows で動く MCP stdio サーバーで、`build` / `test` / `run_app` を公開する |
+| `src/WinDevBridge.Tests` | ブリッジの xUnit のテスト(Linux でも Windows でも動く) |
+| `samples/TemperatureConverter` | 一巡の検証に使う WPF のアプリと xUnit のテスト(Windows でしかビルドできない) |
+
+### コマンド(ブリッジの開発。Linux 側の dotnet)
+
+サンドボックスではホームに書けず、NuGet の証明書の失効確認も拒まれるので、先に環境変数を読み込む。リストアには `api.nuget.org` への通信が要る。
+
+```bash
+. $TMPDIR/dotnet-env.sh   # DOTNET_CLI_HOME と NUGET_PACKAGES を $TMPDIR に、NUGET_CERT_REVOCATION_MODE=offline
+dotnet build WinDevBridge.slnx
+dotnet test src/WinDevBridge.Tests
+dotnet publish src/WinDevBridge -c Release -r win-x64 --self-contained false -o artifacts/WinDevBridge
+```
+
+`$TMPDIR/dotnet-env.sh` が無いときは、上の 3 つの変数と `DOTNET_NOLOGO=1` を export する。
+
+### Windows 側での操作(サンプルなど)
+
+MCP サーバー `windev` のツールを使う(Plans の節 4 のテンプレートに従う)。登録と配置はユーザーが行う(Plans の節 2.2〜2.3)。
 
 ## 目的（プロンプトファイルの要約）
 

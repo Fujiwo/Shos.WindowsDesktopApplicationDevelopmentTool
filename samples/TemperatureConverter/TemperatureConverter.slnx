@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="TemperatureConverter.Tests/TemperatureConverter.Tests.csproj" />
+  <Project Path="TemperatureConverter/TemperatureConverter.csproj" />
+</Solution>

@@ -1,0 +1,11 @@
+<Window x:Class="TemperatureConverter.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Temperature Converter" SizeToContent="WidthAndHeight">
+    <StackPanel Margin="16">
+        <TextBlock Text="摂氏"/>
+        <TextBox x:Name="CelsiusBox" Width="160" TextChanged="OnCelsiusChanged"/>
+        <TextBlock Text="華氏" Margin="0,12,0,0"/>
+        <TextBlock x:Name="FahrenheitText" Text="-"/>
+    </StackPanel>
+</Window>

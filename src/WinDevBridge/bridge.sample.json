@@ -1,0 +1,9 @@
+{
+  "workspaceRoot": "C:\\dropbox\\dropbox\\source\\github\\repos\\Shos.WindowsDesktopApplicationDevelopmentTool",
+  "buildTimeoutSeconds": 600,
+  "testTimeoutSeconds": 900,
+  "maxObservationSeconds": 60,
+  "apps": {
+    "TemperatureConverter": "samples/TemperatureConverter/TemperatureConverter/bin/Debug/net10.0-windows/TemperatureConverter.exe"
+  }
+}

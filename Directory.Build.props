@@ -1,0 +1,6 @@
+<Project>
+  <PropertyGroup>
+    <!-- Claude Code のサンドボックスでは .gitmodules が読めないデバイスに見え、Source Link の git 読み取りがビルドを失敗させるため止める。 -->
+    <EnableSourceControlManagerQueries>false</EnableSourceControlManagerQueries>
+  </PropertyGroup>
+</Project>
