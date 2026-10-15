@@ -8,9 +8,10 @@
 
 | 場所 | 中身 |
 |------|------|
-| `src/WinDevBridge` | ブリッジ。Windows で動く MCP stdio サーバーで、`build` / `test` / `run_app` を公開する |
+| `src/WinDevBridge` | ブリッジ。Windows で動く MCP stdio サーバーで、`build` / `test` / `run_app` を公開する。C# は dotnet、C++ は Visual Studio の MSBuild.exe と vstest.console.exe を使う |
 | `src/WinDevBridge.Tests` | ブリッジの xUnit のテスト(Linux でも Windows でも動く) |
 | `samples/TemperatureConverter` | 一巡の検証に使う WPF のアプリと xUnit のテスト(Windows でしかビルドできない) |
+| `samples/TemperatureConverterCpp` | C++ / Win32 のアプリと Microsoft C++ Unit Test Framework のテスト(Windows の Visual Studio でしかビルドできない) |
 
 ### コマンド(ブリッジの開発。Linux 側の dotnet)
 

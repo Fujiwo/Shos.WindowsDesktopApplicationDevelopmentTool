@@ -11,6 +11,8 @@ public sealed class WorkspaceTests : IDisposable
         root = Path.Combine(parent, "ws");
         CreateFile(root, "App/App.csproj");
         CreateFile(root, "App.slnx");
+        CreateFile(root, "Native/Native.vcxproj");
+        CreateFile(root, "x64/Debug/Native.Tests.dll");
         CreateFile(root, "App/bin/App.exe");
         CreateFile(root, "tools/run.cmd");
         CreateFile(Path.Combine(parent, "ws2"), "Other.csproj");
@@ -53,6 +55,34 @@ public sealed class WorkspaceTests : IDisposable
     [Fact]
     public void FileThatIsNotProjectIsRejected()
         => Assert.Throws<RequestRejectedException>(() => workspace.ResolveProject("tools/run.cmd"));
+
+    [Fact]
+    public void CppProjectIsResolved()
+        => Assert.Equal(Path.Combine(root, "Native", "Native.vcxproj"), workspace.ResolveProject("Native/Native.vcxproj"));
+
+    [Fact]
+    public void DllIsNotProject()
+        => Assert.Throws<RequestRejectedException>(() => workspace.ResolveProject("x64/Debug/Native.Tests.dll"));
+
+    [Fact]
+    public void TestProjectIsResolvedAsTestTarget()
+        => Assert.Equal(Path.Combine(root, "App", "App.csproj"), workspace.ResolveTestTarget("App/App.csproj"));
+
+    [Fact]
+    public void TestDllIsResolvedAsTestTarget()
+        => Assert.Equal(Path.Combine(root, "x64", "Debug", "Native.Tests.dll"), workspace.ResolveTestTarget("x64/Debug/Native.Tests.dll"));
+
+    [Fact]
+    public void CppProjectIsRejectedAsTestTargetWithHintToPassDll()
+    {
+        var error = Assert.Throws<RequestRejectedException>(() => workspace.ResolveTestTarget("Native/Native.vcxproj"));
+
+        Assert.Contains("DLL", error.Message);
+    }
+
+    [Fact]
+    public void TestTargetOutsideWorkspaceIsRejected()
+        => Assert.Throws<RequestRejectedException>(() => workspace.ResolveTestTarget("../ws2/Other.csproj"));
 
     [Fact]
     public void ExistingFileInsideWorkspaceIsResolved()

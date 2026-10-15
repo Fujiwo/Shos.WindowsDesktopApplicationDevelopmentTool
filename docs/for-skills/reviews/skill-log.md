@@ -79,6 +79,15 @@
 | 7 | 2026-10-14 | ブリッジの実装（CapturedProcess） | スキルで判断が変わったとき | object-design.md「デメテルの法則」 | CapturedProcess が Process をそのまま公開していたのをやめ、ExitCode・MainWindowTitle・Responding・CloseMainWindow だけを公開した | スキル | object-design.md「デメテルの法則」 |
 | 8 | 2026-10-14 | ブリッジの実装 | 七箇条に当てはまらない指摘が出たとき | — | 「ブリッジの標準入出力は MCP の通信路なので、子プロセスに引き継がせない」「ログは標準エラー出力へ、EventLog には書かない」は、実行環境（MCP stdio と Windows の既定のロガー）の知識で拾った。正しさ | スキルなし | CLAUDE.md「レビューの観点」の正しさ |
 | 9 | 2026-10-14 | サンプルのビルド（Linux 側） | 実行環境（Windows 側）で不具合が見つかったとき | — | Linux の dotnet では、EnableWindowsTargeting を付けても WPF のプロジェクトが理由を出さずに失敗した。スキルの範囲の外（実行環境の差）。Windows 側の確認はブリッジの登録の後に回した | スキルなし | Plans の節 0 |
+| 10 | 2026-10-15 | README.md / README.jp.md の作成 | スキルと CLAUDE.md がぶつかったとき | SKILL.md の description（コードに触れない作業では使わない） | 文書だけの作業なのでスキルを呼ばなかった | スキルなし | SKILL.md の description |
+| 11 | 2026-10-15 | ブリッジへの C++ / MFC / Win32 の追加（設計と実装） | スキルを呼んだとき、reference を読んだとき | SKILL.md の表「新機能の実装」 | 「必ず読む」の collaboration.md「着手前」、testing.md「テストファースト」「TDD の進め方」「テストケースの設計」と、「必要なら読む」の quality-gates.md「契約とガード節」（引数の検証を足すため）を読んだ | — | 表の「必ず読む」「必要なら読む」 |
+| 12 | 2026-10-15 | ブリッジへの C++ の追加（範囲の確認） | スキルで判断が変わったとき | collaboration.md「着手前」の不明点の仕分け | 「手順も考慮せよ」が文書だけか、ブリッジの拡張までかで作るものが大きく変わるので、選択肢を示して確かめた（ユーザーは拡張を選んだ） | スキル | collaboration.md「着手前」の表の 1 行目 |
+| 13 | 2026-10-15 | ブリッジへの C++ の追加(BuildOptions〜BridgeTools) | スキルで判断が変わったとき | testing.md「TDD の進め方」手順 2・3 | 型ごとにテストを書き、コンパイルエラーの Red を毎回確かめてから実装した(MSBuildCommand、DotnetCommand の platform、VSTestCommand、Workspace、ProjectFile、BridgeSettings、VisualStudioTools、BridgeTools の 8 回) | スキル | testing.md「TDD の進め方」 |
+| 14 | 2026-10-15 | ブリッジへの C++ の追加(構成とプラットフォームの検証) | スキルで判断が変わったとき | SKILL.md 判断ルール 6、七箇条 Once And Only Once、quality-gates.md「ガード節」 | 構成の検証が DotnetCommand と MSBuildCommand で同じ意図なので BuildOptions に集め、プラットフォームも一覧で受けるガードにした(任意の文字列は `-p:` や `-t:` の差し込みになる) | スキル | 判断ルール 6、quality-gates.md「ガード節」 |
+| 15 | 2026-10-15 | ブリッジへの C++ の追加(VisualStudioTools) | スキルで判断が変わったとき | SKILL.md 判断ルール 3(テスト容易性 vs YAGNI) | vswhere の場所をコンストラクタで受け、BridgeTools も VisualStudioTools を DI で受けるようにした。テスト(最初の利用者)が、Windows で本物の Visual Studio を呼ばずに C++ の経路を確かめるために要った。I/O は差し替えず、引数を出すだけの偽のスクリプトを本物のプロセスとして動かした | スキル | 判断ルール 3 |
+| 16 | 2026-10-15 | ブリッジへの C++ の追加(Refactor の拍) | スキルで判断が変わったとき | 七箇条 Once And Only Once、的確な名前 | 偽のスクリプトを作る処理が 2 つのテストに出たので FakeTool に集めた。Workspace の公開の ResolveFile と同じ名前の非公開の多重定義(種類を確かめる)を ResolveFileOfKind に改めた | スキル | 七箇条 |
+| 17 | 2026-10-15 | ブリッジへの C++ の追加(Linux での MCP の確認) | 七箇条に当てはまらない指摘が出たとき | — | 確かめのために、ビルドの出力の中にもとからあった bridge.json を、中身を見ずに上書きし、後で消した(git の対象外で、戻せない)。スキルの範囲の外(作業の手順の誤り)。上書きの前に中身を見るべきだった。正しさ | スキルなし | — |
+| 18 | 2026-10-15 | C++ のサンプル(samples/TemperatureConverterCpp) | 実行環境(Windows 側)で不具合が見つかったとき | — | まだ不具合は見つかっていないが、.vcxproj は Linux ではビルドできず、Windows で一度も確かめていない。`/utf-8`、出力の場所、Platform の既定は、実行環境の知識(日本語の Windows のコードページ、MSBuild の SolutionDir)で決めた。スキルの範囲の外 | スキルなし | CLAUDE.md「実行環境での確認」 |
 
 ## ユーザーの指摘と感想
 

@@ -11,5 +11,6 @@ var builder = Host.CreateApplicationBuilder();
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole(options => options.LogToStandardErrorThreshold = LogLevel.Trace);
 builder.Services.AddSingleton(settings);
+builder.Services.AddSingleton(new VisualStudioTools(settings.MSBuildPath, settings.VSTestPath, VisualStudioTools.DefaultVswherePath));
 builder.Services.AddMcpServer().WithStdioServerTransport().WithTools<BridgeTools>();
 await builder.Build().RunAsync();

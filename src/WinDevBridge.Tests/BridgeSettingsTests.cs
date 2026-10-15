@@ -6,6 +6,15 @@ public sealed class BridgeSettingsTests : IDisposable
 
     public void Dispose() => Directory.Delete(root, recursive: true);
 
+    static string Quote(string text) => System.Text.Json.JsonSerializer.Serialize(text);
+
+    string CreateFile(string name)
+    {
+        var path = Path.Combine(root, name);
+        File.WriteAllText(path, "");
+        return path;
+    }
+
     string Json(string body) => "{ \"workspaceRoot\": " + System.Text.Json.JsonSerializer.Serialize(root) + body + " }";
 
     [Fact]
@@ -18,7 +27,29 @@ public sealed class BridgeSettingsTests : IDisposable
         Assert.Equal(TimeSpan.FromMinutes(15), settings.TestTimeout);
         Assert.Equal(TimeSpan.FromSeconds(60), settings.MaxObservation);
         Assert.Empty(settings.Apps);
+        Assert.Null(settings.MSBuildPath);
+        Assert.Null(settings.VSTestPath);
     }
+
+    [Fact]
+    public void VisualStudioToolPathsAreRead()
+    {
+        var msbuild = CreateFile("MSBuild.exe");
+        var vstest = CreateFile("vstest.console.exe");
+
+        var settings = BridgeSettings.Parse(Json(", \"msbuildPath\": " + Quote(msbuild) + ", \"vstestPath\": " + Quote(vstest)));
+
+        Assert.Equal(msbuild, settings.MSBuildPath);
+        Assert.Equal(vstest, settings.VSTestPath);
+    }
+
+    [Fact]
+    public void RelativeToolPathIsAnError()
+        => Assert.Throws<InvalidDataException>(() => BridgeSettings.Parse(Json(""", "msbuildPath": "MSBuild.exe" """)));
+
+    [Fact]
+    public void MissingToolFileIsAnError()
+        => Assert.Throws<InvalidDataException>(() => BridgeSettings.Parse(Json(", \"vstestPath\": " + Quote(Path.Combine(root, "missing.exe")))));
 
     [Fact]
     public void TimeoutsAndAppsAreRead()

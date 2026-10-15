@@ -1,0 +1,7 @@
+<Solution>
+  <Configurations>
+    <Platform Name="x64" />
+  </Configurations>
+  <Project Path="TemperatureConverterCpp.Tests/TemperatureConverterCpp.Tests.vcxproj" />
+  <Project Path="TemperatureConverterCpp/TemperatureConverterCpp.vcxproj" />
+</Solution>

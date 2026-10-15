@@ -3,7 +3,7 @@
 - 作成: 2026-10-14 17:46(日本時間)
 - 元のプロンプト: `.github/prompts/ClaudeCodeDevelopmentBestPractices.prompt.md`
 - 作ったツール: `src/WinDevBridge`(ブリッジ)、`src/WinDevBridge.Tests`(xUnit のテスト)
-- 検証の対象: `samples/TemperatureConverter`(C# / .NET 10 / WPF のアプリと xUnit のテスト)
+- 検証の対象: `samples/TemperatureConverter`(C# / .NET 10 / WPF のアプリと xUnit のテスト)、`samples/TemperatureConverterCpp`(C++ / Win32 のアプリと Microsoft C++ Unit Test Framework のテスト。2026-10-15 に追加)
 
 ## 0. 前提の確認(比べる前に実機で確かめたこと)
 
@@ -49,13 +49,24 @@ WSL2 (Ubuntu)                                        Windows 11 (ログインユ
 
 | ツール | 引数 | すること |
 |--------|------|----------|
-| `build` | `project`(作業フォルダーからの相対パス。`.csproj` / `.sln` / `.slnx`)、`configuration`(`Debug` / `Release`) | `dotnet build <project> --configuration <c> --nologo --verbosity minimal --disable-build-servers` |
-| `test` | `project`、`filter`(省略可。`dotnet test --filter` の式) | `dotnet test <project> --nologo --verbosity minimal --disable-build-servers [--filter <f>]` |
+| `build` | `project`(作業フォルダーからの相対パス。`.csproj` / `.vcxproj` / `.sln` / `.slnx`)、`configuration`(`Debug` / `Release`)、`platform`(省略可。`x64` / `Win32` / `x86` / `ARM64`) | C#: `dotnet build <project> --configuration <c> --nologo --verbosity minimal --disable-build-servers [--property:Platform=<p>]`<br>C++(`.vcxproj` と、それを含むソリューション): `MSBuild.exe <project> -restore -nologo -verbosity:minimal -nodeReuse:false -p:UseSharedCompilation=false -p:Configuration=<c> [-p:Platform=<p>]` |
+| `test` | `project`(`.csproj` / `.sln` / `.slnx`、または C++ のテストのビルドした `.dll`)、`filter`(省略可。テストを絞る式) | C#: `dotnet test <project> --nologo --verbosity minimal --disable-build-servers [--filter <f>]`<br>C++: `vstest.console.exe <dll> [/TestCaseFilter:<f>]` |
 | `run_app` | `app`(bridge.json に登録した名前)、`seconds`(1〜上限) | アプリを起動し、指定の秒数だけ観察した後に、窓を閉じる要求を送る。5 秒で終わらなければ、プロセスツリーごと強制終了する |
 
 結果は、先頭行が `結果: 成功(終了コード 0)` / `結果: 失敗(終了コード 1)` / `結果: 時間切れ(600 秒で止めました)` の文面で返る。その後に、標準出力と標準エラー出力をそれぞれ末尾 12,000 文字まで付ける。断った要求は、理由を付けたエラー(MCP の `isError`)として返る。
 
-C++ / MFC / Win32 への広げ方: `MSBuild.exe` を `vswhere.exe -latest -find MSBuild\**\Bin\MSBuild.exe` で見つける。そのうえで、`.vcxproj` 用の `DotnetCommand` に当たるコマンドラインの組み立てを一つ足す。ツールの層、パスの検証、プロセスの扱い、出力の読み方はそのまま使える(MSBuild.exe はコードページ 932 で出力することがあるので、`ConsoleText` の判定がここで効く)。今回の一巡には要らないので、作っていない。
+### C++ / MFC / Win32(2026-10-15 に追加)
+
+`dotnet build` は `.vcxproj` をビルドできず、`dotnet test` は C++ のネイティブのテストを実行できない。そこで、C++ のときだけ Visual Studio のツールに切り替える。ツールの層、パスの検証、1 つずつの処理、プロセスの扱い、出力の読み方は C# と同じものを使う(MSBuild.exe と vstest.console.exe はコードページ 932 で出力することがあるが、`ConsoleText` が判定して UTF-8 に揃える)。
+
+| 場面 | 切り替え方 |
+|------|------------|
+| ビルド | `.vcxproj`、または中に `.vcxproj` を含む `.sln` / `.slnx` なら MSBuild.exe を使う(`ProjectFile.NeedsMSBuild`)。C# と C++ が混ざったソリューションも MSBuild.exe でビルドする(`-restore` で C# の NuGet も戻す) |
+| テスト | `project` に `.dll` を渡したら vstest.console.exe で実行する。C++ のテストは、`build` でテストのプロジェクトをビルドしてから、できた DLL を渡す。`.vcxproj` を `test` に渡すと、DLL を渡すように促すエラーになる |
+| ツールの場所 | `bridge.json` の `msbuildPath` / `vstestPath`(省略可。絶対パス)。省略すると、`vswhere.exe -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -find ...` で、C++ のワークロードの入った最新の Visual Studio から探す。複数の版があり、古いツールセット(例: v142)のプロジェクトを古い版でビルドしたいときは、`msbuildPath` で版を固定する |
+| プラットフォーム | C++ のプロジェクトは構成とプラットフォームの組(`Debug` と `x64` など)を持つので、`platform` を足した。値は一覧の中からだけ受ける(任意の文字列を通すと、`-p:` や `-t:` を差し込まれる)。C# にも同じ値を `--property:Platform` で渡す |
+
+MFC も、プロジェクトのファイルに `UseOfMfc` があるだけで、ビルドの仕方は Win32 と同じである(Visual Studio に MFC のコンポーネントが要る。節 2.6)。GUI の起動と終了の確かめ方(`run_app`)も、C# と変わらない。
 
 ## 2. 構築の手順
 
@@ -94,7 +105,7 @@ Copy-Item -Force "$repo\src\WinDevBridge\bridge.sample.json" C:\Tools\WinDevBrid
 }
 ```
 
-ブリッジは Windows の `PATH` にある `dotnet`(`C:\Program Files\dotnet\dotnet.exe`)を使う。
+ブリッジは Windows の `PATH` にある `dotnet`(`C:\Program Files\dotnet\dotnet.exe`)を使う。C++ のサンプルを使うときは、`apps` に `"TemperatureConverterCpp": "samples/TemperatureConverterCpp/TemperatureConverterCpp/bin/x64/Debug/TemperatureConverterCpp.exe"` を足す(`bridge.sample.json` には入れてある)。MSBuild.exe と vstest.console.exe の場所を固定したいときは、`"msbuildPath"` と `"vstestPath"` に絶対パスを書く(節 1 の「C++ / MFC / Win32」)。
 
 ### 2.3 Claude Code に登録する [ユーザー]
 
@@ -147,6 +158,17 @@ claude mcp add --scope local --transport stdio windev -- /mnt/c/Tools/WinDevBrid
   - 要求は 1 つずつ処理する(ビルドとテストが同じ `obj` を取り合わない)。
   - `run_app` はアプリを必ず終わらせる(起動したままの exe が次のビルドの上書きを妨げない)。
 
+### 2.6 C++ / MFC / Win32 のための準備 [ユーザー]
+
+- **Visual Studio のワークロード**: Visual Studio Installer で「C++ によるデスクトップ開発」を入れる。MSVC のツールセット、Windows SDK、MSBuild、Microsoft C++ Unit Test Framework、vstest.console.exe が入る。MFC を使うなら、同じワークロードの「最新の v14x ビルド ツール用 C++ MFC」も入れる。Build Tools for Visual Studio だけでもよい(vswhere の `-products *` で見つかる)。
+- **プロジェクトのファイル**(`samples/TemperatureConverterCpp` の `.vcxproj` がこの形になっている):
+  - `<Platform Condition="'$(Platform)' == ''">x64</Platform>` を先頭に置く。`platform` を省略されたときに、ない構成(`Debug` と `Win32` の組)にならない。
+  - `OutDir` / `IntDir` を `$(MSBuildProjectDirectory)\bin\...` / `obj\...` にする。ソリューションからでも単独でもビルドの出力の場所が同じになり、`run_app` の登録と `test` に渡す DLL のパスが一つに決まる。`.gitignore` と Dropbox の除外(節 2.5)にもそのまま入る。
+  - `/utf-8` を付ける。日本語の Windows では、BOM のない UTF-8 のソースがコードページ 932 として読まれ、文字化けや C4819 の警告になる。WSL の Claude Code は BOM のない UTF-8 で書く。
+  - `PlatformToolset` を `$(DefaultPlatformToolset)` にすると、入っている Visual Studio の版に合わせる。既存のプロジェクトで版が決まっている(例: `v142`)ときは、そのツールセットを入れるか、`msbuildPath` でその版の MSBuild.exe を使う。
+  - テストのプロジェクトは `<ProjectSubType>NativeUnitTestProject</ProjectSubType>` を付けた DLL にする。Microsoft C++ Unit Test Framework のヘッダーとライブラリの場所が自動で足される。
+- **Google Test**: このブリッジの `test` では扱わない(vstest.console.exe で動かすには Test Adapter for Google Test の場所を渡す必要があり、今の一巡には要らない)。テストの実行ファイルを `apps` に登録して `run_app` で動かすと、終了コードと標準出力は読めるが、GUI 向けの観察になる。
+
 ## 3. セキュリティの境界と権限の制御
 
 ### 3.1 境界の層
@@ -155,7 +177,7 @@ claude mcp add --scope local --transport stdio windev -- /mnt/c/Tools/WinDevBrid
 |----|----------|--------|
 | Bash サンドボックス | Bash から Windows のコマンドを呼ぶこと、Windows ホストへのネットワーク | seccomp による AF_UNIX の拒否(Interop が使えない)、ネットワークの名前空間。`allowAllUnixSockets` も、Windows のコマンドの `excludedCommands` も**設定しない** |
 | Claude Code の権限 | ブリッジ、その設定、MCP の登録、権限の設定そのものを書き換えること | 節 3.2 の `permissions` |
-| ブリッジ | 許した 3 つの操作の外 | ツールは `build` / `test` / `run_app` だけ。パスは作業フォルダーの中の実在するプロジェクトに限る(絶対パスと `..` での脱出を断る)。構成は `Debug` / `Release` だけ。アプリは `bridge.json` に登録した名前だけ。観察の秒数には上限がある。シェルを通さずに引数を要素の並びで渡す。子プロセスに標準入力を引き継がせない。時間切れのときはプロセスツリーごと止める |
+| ブリッジ | 許した 3 つの操作の外 | ツールは `build` / `test` / `run_app` だけ。パスは作業フォルダーの中の実在するプロジェクト(テストでは、それに加えてビルドした DLL)に限る(絶対パスと `..` での脱出を断る)。構成は `Debug` / `Release` だけ。プラットフォームは `x64` / `Win32` / `x86` / `ARM64` だけ。MSBuild.exe と vstest.console.exe の場所は `bridge.json` か vswhere からだけ決まり、要求では変えられない。アプリは `bridge.json` に登録した名前だけ。観察の秒数には上限がある。シェルを通さずに引数を要素の並びで渡す。子プロセスに標準入力を引き継がせない。時間切れのときはプロセスツリーごと止める |
 | 設定の置き場所 | ブリッジの規則を Claude Code が緩めること | `bridge.json` は実行ファイルの隣からだけ読み、引数や環境変数では変えられない。置き場所(`C:\Tools`)はサンドボックスの書ける範囲の外 |
 
 ### 3.2 Claude Code の権限の設定(`.claude/settings.json`)
@@ -170,6 +192,7 @@ claude mcp add --scope local --transport stdio windev -- /mnt/c/Tools/WinDevBrid
     ],
     "ask": [
       "Edit(**/*.csproj)",
+      "Edit(**/*.vcxproj)",
       "Edit(**/*.props)",
       "Edit(**/*.targets)",
       "Edit(**/nuget.config)",
@@ -195,7 +218,7 @@ claude mcp add --scope local --transport stdio windev -- /mnt/c/Tools/WinDevBrid
 ```
 
 - `allow` は、ブリッジの 3 つのツールを確認なしで使えるようにする。自律のループが確認待ちで止まらないためである。
-- `ask` は、ビルドの定義(MSBuild のプロジェクト、props、targets、NuGet の設定、SDK の固定)を変える編集に、人の承認を求める。ビルドの定義は、ビルドのときに任意のコマンドを走らせられる場所だからである(節 3.3)。新しいプロジェクトを作る作業では確認が増えるので、そのときだけ緩めてよい。
+- `ask` は、ビルドの定義(MSBuild のプロジェクト(`.csproj` / `.vcxproj`)、props、targets、NuGet の設定、SDK の固定)を変える編集に、人の承認を求める。C++ では、ビルド前後のイベント(`PreBuildEvent` / `PostBuildEvent`)や `CustomBuild` も `.vcxproj` の中にあるので、ここで止まる。ビルドの定義は、ビルドのときに任意のコマンドを走らせられる場所だからである(節 3.3)。新しいプロジェクトを作る作業では確認が増えるので、そのときだけ緩めてよい。
 - `deny` は、境界そのもの(ブリッジ、その設定、MCP の登録、権限の設定)を書き換えさせない。Write や Edit のツールは Bash サンドボックスの外で動くので、ここで止める必要がある。
 - `allowUnsandboxedCommands: false` は、サンドボックスの外での再実行という抜け道を閉じる。
 
@@ -221,7 +244,7 @@ fi
 
 | 段階 | すること | 防げること | 費用 |
 |------|----------|------------|------|
-| 1(今回) | 節 3.2 の `ask` で、ビルドの定義の変更に人の承認を求める。変更はすべて git の差分で見える | ビルドの定義を経由した気づかれない実行。テストのコードとアプリのコードを経由した実行は残る | 低い |
+| 1(今回) | 節 3.2 の `ask` で、ビルドの定義の変更に人の承認を求める。変更はすべて git の差分で見える | ビルドの定義を経由した気づかれない実行。テストのコードとアプリのコードを経由した実行は残る(C++ のテストの DLL は vstest のプロセスに読み込まれて動く) | 低い |
 | 2 | Windows に低権限のローカルユーザーを作り、作業フォルダーだけに書き込み権限を与える。OpenSSH サーバーを有効にし、MCP の登録を `ssh -T bridge@localhost C:/Tools/WinDevBridge/WinDevBridge.exe` に替える | ログインユーザーのファイル、資格情報、ブラウザーなどへの到達 | 中。ssh の鍵の管理、作業フォルダーの ACL の設定 |
 | 3 | 段階 2 と同じ ssh の登録で、接続先を Hyper-V の VM にする。ソースは VM と共有する | ホストそのものへの到達 | 高い。VM の運用、共有フォルダーの速度 |
 
@@ -234,21 +257,25 @@ fi
 ````markdown
 ## Windows でのビルド・テスト・起動
 
-このリポジトリは Windows デスクトップアプリ(<C# / .NET 10 / WPF>)である。WSL の Bash では、Linux の dotnet で WPF をビルドできず、Windows のコマンドもサンドボックスで失敗する。それでも、**MCP サーバー `windev` を使えば Windows 側でビルド・テスト・起動ができる。人に頼まずに、次のツールを使う。**
+このリポジトリは Windows デスクトップアプリ(<C# / .NET 10 / WPF、または C++ / MFC / Win32>)である。WSL の Bash では、Linux の dotnet で WPF をビルドできず、Windows のコマンドもサンドボックスで失敗する。それでも、**MCP サーバー `windev` を使えば Windows 側でビルド・テスト・起動ができる。人に頼まずに、次のツールを使う。**
 
 | やりたいこと | ツール | 引数の例 |
 |--------------|--------|----------|
-| ビルド | `mcp__windev__build` | `project: "<src/App/App.csproj>"`, `configuration: "Debug"` |
-| 単体テスト | `mcp__windev__test` | `project: "<tests/App.Tests/App.Tests.csproj>"`, `filter: "FullyQualifiedName~<Calculator>"` |
+| ビルド(C#) | `mcp__windev__build` | `project: "<src/App/App.csproj>"`, `configuration: "Debug"` |
+| ビルド(C++) | `mcp__windev__build` | `project: "<src/App/App.vcxproj>"`(またはソリューション), `configuration: "Debug"`, `platform: "x64"` |
+| 単体テスト(C#) | `mcp__windev__test` | `project: "<tests/App.Tests/App.Tests.csproj>"`, `filter: "FullyQualifiedName~<Calculator>"` |
+| 単体テスト(C++) | `mcp__windev__build` の後に `mcp__windev__test` | `build` で `project: "<tests/App.Tests/App.Tests.vcxproj>"` をビルドし、`test` に `project: "<tests/App.Tests/bin/x64/Debug/App.Tests.dll>"` を渡す |
 | アプリの起動と終了 | `mcp__windev__run_app` | `app: "<App>"`, `seconds: 10` |
 
 - パスは、リポジトリ直下からの相対パスを `/` 区切りで書く。`/mnt/c/...` や `C:\...` の絶対パスと、リポジトリの外は断られる。
 - Bash で `dotnet build` / `dotnet test` / `cmd.exe` / `powershell.exe` / `*.exe` を使わない。
 - 回し方: 編集 → `test`(新しいテストが失敗することを確かめる)→ 修正 → `test`(すべて成功)→ 画面に関わる変更なら `run_app`。
+- C++ では、`test` はビルドしない。テストの前に、必ずテストのプロジェクトを `build` する(古い DLL のテストを読まないため)。アプリを `run_app` する前も、アプリのプロジェクトを `build` する。
+- C++ のソースは BOM のない UTF-8 で書く。プロジェクトに `/utf-8` が無いと、日本語のコメントや文字列で C4819 の警告や文字化けが出る。そのときは、`.vcxproj` に `/utf-8` を足す編集の承認をユーザーに求める。
 
 ### 出力の読み方
 
-- 結果の先頭行は `結果: 成功(終了コード 0)` / `結果: 失敗(終了コード n)` / `結果: 時間切れ(n 秒で止めました)` のどれかである。失敗のときは、標準出力の `error CS....` やテストの `Failed` の行を読む。
+- 結果の先頭行は `結果: 成功(終了コード 0)` / `結果: 失敗(終了コード n)` / `結果: 時間切れ(n 秒で止めました)` のどれかである。失敗のときは、標準出力の `error CS....`(C#)、`error C....` / `error LNK....`(C++)や、テストの `Failed` の行を読む。
 - ブリッジは子プロセスの出力を UTF-8 か Shift-JIS(コードページ 932)かを判定し、UTF-8 に揃えて返す。Claude Code の側で文字コードを変換しない。それでも文字化けしていたら、そのまま報告する。
 - 出力は、標準出力と標準エラー出力のそれぞれ末尾 12,000 文字だけが返る(`(先頭の n 文字を省略)` と出る)。足りないときは `filter` で対象を絞る。
 
@@ -267,7 +294,8 @@ fi
 次の場面に限っては止めて、ユーザーに頼む。
 
 - `windev` のツールが見つからない、またはつながらない(`/mcp` で確かめる)。
-- `bridge.json` を変える必要がある(アプリの登録、時間切れの延長など)、またはブリッジを更新したい。
+- `bridge.json` を変える必要がある(アプリの登録、時間切れの延長、MSBuild.exe の版の固定など)、またはブリッジを更新したい。
+- C++ のビルドが「Visual Studio が見つかりません」や、ツールセット(`MSB8020` など)、MFC のライブラリの不足で失敗した(Visual Studio のコンポーネントの追加が要る)。
 - 権限で拒まれた操作が、作業にどうしても要る。
 - ビルドの定義(`*.csproj`、`*.props`、`*.targets`、`nuget.config`、`global.json`)を変える編集の承認。
 
@@ -287,3 +315,6 @@ fi
 | 2026-10-14 | `dotnet publish -r win-x64` | 警告 0 で `artifacts/WinDevBridge` に出力 |
 | (未) | Windows でブリッジを起動し、Claude Code から `build` / `test` / `run_app` を呼ぶ(MCP のサーバーが Interop を使えることの実機での確認を含む) | 節 2.2〜2.3 の反映待ち |
 | (未) | サンプルで「編集 → テスト(失敗)→ 修正 → テスト(成功)→ 起動と終了」を一巡回す | 同上 |
+| 2026-10-15 | C++ への拡張のブリッジの単体テスト(Linux 側の dotnet 10.0.112)。MSBuild.exe、vstest.console.exe、vswhere の代わりに、引数を出すだけのスクリプトを置いて確かめた | 79 件すべて成功 |
+| 2026-10-15 | ブリッジを Linux で起動し、MCP で tools/list と C++ の要求を送った | `build` に `platform` が出た。`.slnx`(C++ を含む)の `build` は「Visual Studio が見つかりません ... msbuildPath」、`.vcxproj` の `test` は DLL を促すエラー、`platform: "Any CPU"` は一覧外のエラーで返った |
+| (未) | Windows で、`samples/TemperatureConverterCpp` を `build`(MSBuild.exe を vswhere で探す)→ テストの DLL を `test`(vstest.console.exe。x64 の DLL のプラットフォームを vstest が自分で判定するかを含む)→ `run_app` | 節 2.2〜2.3 の反映待ち。サンプルの `.vcxproj` も、まだ一度も Windows でビルドしていない |

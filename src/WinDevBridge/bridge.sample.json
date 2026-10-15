@@ -4,6 +4,7 @@
   "testTimeoutSeconds": 900,
   "maxObservationSeconds": 60,
   "apps": {
-    "TemperatureConverter": "samples/TemperatureConverter/TemperatureConverter/bin/Debug/net10.0-windows/TemperatureConverter.exe"
+    "TemperatureConverter": "samples/TemperatureConverter/TemperatureConverter/bin/Debug/net10.0-windows/TemperatureConverter.exe",
+    "TemperatureConverterCpp": "samples/TemperatureConverterCpp/TemperatureConverterCpp/bin/x64/Debug/TemperatureConverterCpp.exe"
   }
 }
