@@ -88,6 +88,9 @@
 | 16 | 2026-10-15 | ブリッジへの C++ の追加(Refactor の拍) | スキルで判断が変わったとき | 七箇条 Once And Only Once、的確な名前 | 偽のスクリプトを作る処理が 2 つのテストに出たので FakeTool に集めた。Workspace の公開の ResolveFile と同じ名前の非公開の多重定義(種類を確かめる)を ResolveFileOfKind に改めた | スキル | 七箇条 |
 | 17 | 2026-10-15 | ブリッジへの C++ の追加(Linux での MCP の確認) | 七箇条に当てはまらない指摘が出たとき | — | 確かめのために、ビルドの出力の中にもとからあった bridge.json を、中身を見ずに上書きし、後で消した(git の対象外で、戻せない)。スキルの範囲の外(作業の手順の誤り)。上書きの前に中身を見るべきだった。正しさ | スキルなし | — |
 | 18 | 2026-10-15 | C++ のサンプル(samples/TemperatureConverterCpp) | 実行環境(Windows 側)で不具合が見つかったとき | — | まだ不具合は見つかっていないが、.vcxproj は Linux ではビルドできず、Windows で一度も確かめていない。`/utf-8`、出力の場所、Platform の既定は、実行環境の知識(日本語の Windows のコードページ、MSBuild の SolutionDir)で決めた。スキルの範囲の外 | スキルなし | CLAUDE.md「実行環境での確認」 |
+| 19 | 2026-10-15 | windev を使うスキル(skills/windows-desktop-dev)の下書き | スキルと CLAUDE.md がぶつかったとき | SKILL.md の description(コードに触れない作業では使わない) | 文書(スキル)だけの作業なので sustainable-code-jp は呼ばず、skill-creator を使った | スキルなし | SKILL.md の description |
+| 20 | 2026-10-15 | skills/windows-desktop-dev のレビュー | 七箇条に当てはまらない指摘が出たとき | SKILL.md の description(コードに触れない作業では使わない) | 対象が文書(スキル)だけなのでスキルを呼ばなかった。指摘はすべて「整合」(Plans の権限の設定との差、ネイティブの Windows での発動、発行の手順の欠け)と「正しさ」(遅延読み込みの MCP ツール、DLL のパスの変換と既定の出力の場所、ソリューションのプラットフォーム名、Linux の dotnet new、MSBuild のエラーの番号)で拾った | スキルなし | CLAUDE.md「レビューの観点」 |
+| 21 | 2026-10-15 | skills/windows-desktop-dev のレビューの指摘 1〜11 の反映 | スキルと CLAUDE.md がぶつかったとき | SKILL.md の description(コードに触れない作業では使わない) | 文書だけの修正なのでスキルを呼ばなかった。範囲外の気づき(Plans の節 4 のテンプレートをスキルへの参照に縮める)は、プロンプトファイルの成果物 4 がテンプレートの中身を求めているので反映しなかった | スキルなし | プロンプトファイルの出力要件 4 |
 
 ## ユーザーの指摘と感想
 

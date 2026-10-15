@@ -1,0 +1,23 @@
+{
+  "skill_name": "windows-desktop-dev",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "samples/TemperatureConverter の WPF アプリに、華氏から摂氏への換算を足して。Temperature に FromFahrenheit を作って、テストも書いてね。終わったらアプリが起動するかも見ておいて。",
+      "expected_output": "Bash で dotnet build/test を呼ばず、mcp__windev__test でテストが失敗することを確かめてから実装し、test で成功、build の後に run_app で起動と終了を確かめる。人にビルドを頼まない。",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "samples/TemperatureConverterCpp の C++ 版にも、華氏→摂氏の ToCelsius を足してテストして。",
+      "expected_output": "platform: x64 でテストの .vcxproj(かソリューション)を build し、bin/x64/Debug の .dll を test に渡す。.vcxproj を test に直接渡さない。ソースは UTF-8 で書く。",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "ビルドしたら error MSB8020 が出た。v142 のビルドツールが見つからないって言われる。直しておいて。",
+      "expected_output": "PlatformToolset を勝手に書き換えず、原因(ツールセットが入っていない)と、ユーザーにしてほしいこと(ツールセットの追加、msbuildPath での版の固定、または変更の承認)を、3 点の型で報告する。",
+      "files": []
+    }
+  ]
+}
